@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImageStitch - Online Image Combiner</title>
+    <meta name="description" content="Combine multiple images into one online. Stitch images vertically or horizontally for free. No upload required, 100% secure." />
+    <meta name="keywords" content="image combiner, stitch images, merge images, combine images, image stitcher, online image tool" />
+    <meta name="robots" content="index, follow" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🖼️</text></svg>">
+    
+    <!-- out zip -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563EB',
+                        secondary: '#10B981',
+                        neutral: '#F3F4F6',
+                        dark: '#1F2937'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'slide-up': 'slideUp 0.5s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                },
+            }
+        }
+    </script>
+    
+    <!-- auto tools -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .input-focus {
+                @apply focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none;
+            }
+            .btn-hover {
+                @apply hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5;
+            }
+            .card-hover {
+                @apply hover:shadow-md transition-all duration-300;
+            }
+        }
+    </style>
+    
+    <!-- Core Style-->
+    <style>
+        /* Image preview style */
+        .image-preview {
+            transition: all 0.3s ease;
+        }
+        .image-preview:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .image-item {
+            transition: all 0.3s ease;
+        }
+        .image-item:hover .remove-image {
+            opacity: 1;
+            visibility: visible;
+        }
+        /* Canvas style */
+        #preview-canvas {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        /* loading animation */
+        .loader {
+            border-top-color: #2563EB;
+            animation: spinner 0.8s linear infinite;
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* progress bar */
+        .progress-bar {
+            height: 4px;
+            background-color: #E5E7EB;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #10B981;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        /* Scroll bar beautification */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+</head>
+<body class="font-inter bg-white min-h-screen flex flex-col">
+    <!-- navigation bar -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div class="container mx-auto px-4 py-4 flex flex-wrap justify-between items-center">
+            <div class="flex items-center space-x-2 mb-4 sm:mb-0">
+                <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
+                    <i class="fa fa-picture-o"></i>
+                </div>
+                <span class="text-lg font-semibold text-gray-800">ImageStitch</span>
+            </div>          
+            <nav class="flex items-center space-x-6">
+                <a href="#how-it-works" class="text-sm text-gray-600 hover:text-primary transition-colors" data-i18n="nav.how">How It Works</a>
+                <a href="#features" class="text-sm text-gray-600 hover:text-primary transition-colors" data-i18n="nav.features">Features</a>
+                <a href="#faq" class="text-sm text-gray-600 hover:text-primary transition-colors" data-i18n="nav.faq">FAQ</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8 md:py-12">
+        <!-- Hero Zone -->
+        <div class="max-w-4xl mx-auto text-center mb-12 animate-fade-in">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4" data-i18n="hero.title">Combine Images Online for Free</h1>
+            <p class="text-gray-600 mb-8 max-w-2xl mx-auto" data-i18n="hero.description">
+                Stitch multiple images vertically or horizontally. No upload required, 100% secure. Your images stay private on your device.
+            </p>
+            
+            <!-- Safety feature label -->
+            <div class="flex flex-wrap justify-center gap-4 text-sm text-gray-500 mb-8">
+                <span class="flex items-center"><i class="fa fa-lock text-secondary mr-1"></i> <span data-i18n="hero.security1">No Uploads</span></span>
+                <span class="flex items-center"><i class="fa fa-shield text-secondary mr-1"></i> <span data-i18n="hero.security2">100% Secure</span></span>
+                <span class="flex items-center"><i class="fa fa-clock-o text-secondary mr-1"></i> <span data-i18n="hero.security3">Fast Processing</span></span>
+                <span class="flex items-center"><i class="fa fa-laptop text-secondary mr-1"></i> <span data-i18n="hero.security4">Cross-Platform</span></span>
+            </div>
+            
+            <!-- Main action buttons -->
+            <a href="#stitcher" class="inline-flex items-center bg-primary hover:bg-primary/90 text-white font-medium px-6 py-3 rounded-lg shadow btn-hover">
+                <i class="fa fa-magic mr-2"></i> <span data-i18n="hero.start">Start Stitching</span>
+            </a>
+        </div>
+        
+        <!-- Core area of image stitching -->
+        <section id="stitcher" class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16 animate-slide-up">
+            <!-- Left side: Settings panel -->
+            <div class="lg:col-span-1 bg-neutral rounded-xl p-6 shadow-sm">
+                <h2 class="text-xl font-semibold text-gray-800 mb-6" data-i18n="settings.title">Stitching Settings</h2>
+                
+                <form id="stitch-form" class="space-y-6">
+                    <!-- Image upload area -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="settings.upload">Add Images</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer" id="drop-area">
+                            <input type="file" id="image-upload" accept="image/*" multiple class="hidden" />
+                            <i class="fa fa-cloud-upload text-gray-400 text-3xl mb-3"></i>
+                            <p class="text-gray-500 mb-2" data-i18n="settings.upload_text">Click to select images or drag and drop</p>
+                            <p class="text-xs text-gray-400" data-i18n="settings.upload_note">Supports JPG, PNG, WEBP (max 20 images)</p>
+                        </div>
+                        
+                        <!-- List of uploaded images -->
+                        <div id="images-list" class="mt-4 space-y-2 hidden">
+                            <h4 class="text-sm font-medium text-gray-700" data-i18n="settings.uploaded">Uploaded Images</h4>
+                            <div id="image-items-container" class="max-h-60 overflow-y-auto pr-1">
+                                <!-- The dynamic image item will be added here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Selection of splicing direction -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="settings.direction">Stitch Direction</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="direction-option">
+                                <input type="radio" name="direction" value="vertical" class="hidden" checked>
+                                <span class="block p-3 border border-gray-300 rounded-lg text-center cursor-pointer hover:border-primary transition-all direction-label">
+                                    <i class="fa fa-long-arrow-down mb-1"></i>
+                                    <div class="text-sm" data-i18n="settings.vertical">Vertical</div>
+                                </span>
+                            </label>
+                            <label class="direction-option">
+                                <input type="radio" name="direction" value="horizontal" class="hidden">
+                                <span class="block p-3 border border-gray-300 rounded-lg text-center cursor-pointer hover:border-primary transition-all direction-label">
+                                    <i class="fa fa-long-arrow-right mb-1"></i>
+                                    <div class="text-sm" data-i18n="settings.horizontal">Horizontal</div>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Output format selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="settings.format">Output Format</label>
+                        <select id="output-format" name="format" 
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 input-focus transition-all">
+                            <option value="image/jpeg" selected>JPEG (Smaller file size)</option>
+                            <option value="image/png">PNG (Lossless quality)</option>
+                            <option value="image/webp">WEBP (Best compression)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Image quality adjustment -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-sm font-medium text-gray-700" data-i18n="settings.quality">Image Quality</label>
+                            <span id="quality-value" class="text-sm text-gray-500">High (0.8)</span>
+                        </div>
+                        <input type="range" id="image-quality" name="quality" min="0.1" max="1" step="0.05" value="0.8"
+                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span data-i18n="settings.low">Low</span>
+                            <span data-i18n="settings.medium">Medium</span>
+                            <span data-i18n="settings.high">High</span>
+                            <span data-i18n="settings.best">Best</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Image spacing adjustment -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-sm font-medium text-gray-700" data-i18n="settings.margin">Image Margin</label>
+                            <span id="margin-value" class="text-sm text-gray-500">0px</span>
+                        </div>
+                        <input type="range" id="image-margin" name="margin" min="0" max="50" step="1" value="0"
+                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span data-i18n="settings.none">None</span>
+                            <span data-i18n="settings.small">Small</span>
+                            <span data-i18n="settings.med">Medium</span>
+                            <span data-i18n="settings.large">Large</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Background color selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="settings.bg_color">Background Color</label>
+                        <div class="flex items-center space-x-3">
+                            <input type="color" id="bg-color" name="bg-color" value="#ffffff" 
+                                class="w-10 h-10 rounded-full border border-gray-300 cursor-pointer">
+                            <select id="preset-colors" 
+                                class="flex-1 px-4 py-2 rounded-lg border border-gray-300 input-focus transition-all">
+                                <option value="#ffffff" selected>White</option>
+                                <option value="#000000">Black</option>
+                                <option value="#f3f4f6">Light Gray</option>
+                                <option value="#e5e7eb">Gray</option>
+                                <option value="#1f2937">Dark Gray</option>
+                                <option value="#ffffff00">Transparent (PNG only)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Processing button -->
+                    <button type="submit" id="process-btn" class="w-full bg-primary hover:bg-primary/90 text-white font-medium px-4 py-3 rounded-lg shadow btn-hover flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed" disabled>
+                        <i class="fa fa-cog mr-2"></i> <span data-i18n="settings.process">Process Images</span>
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Right: Preview and Download Area -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Preview area -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="font-medium text-gray-800" data-i18n="preview.title">Preview</h3>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-sm text-gray-500 hidden" id="preview-dimensions">1920 × 1080</span>
+                            <button type="button" id="clear-preview" class="text-gray-500 hover:text-red-500 transition-colors hidden" title="Clear Preview">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6 md:p-8 flex items-center justify-center bg-neutral min-h-[400px] relative" id="preview-container">
+                        <!-- Initial state -->
+                        <div id="initial-preview" class="text-center">
+                            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
+                                <i class="fa fa-picture-o text-2xl"></i>
+                            </div>
+                            <p class="text-gray-500" data-i18n="preview.empty">Your stitched image will appear here</p>
+                        </div>
+                        
+                        <!-- loading status -->
+                        <div id="loading-preview" class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm z-10 hidden">
+                            <div class="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full loader mb-3"></div>
+                            <p class="text-gray-600" data-i18n="preview.processing">Processing images...</p>
+                            <div class="progress-bar w-64 mt-4">
+                                <div class="progress-fill" id="progress-fill"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Result Preview -->
+                        <div id="result-preview" class="w-full max-w-full mx-auto hidden">
+                            <canvas id="preview-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Download area (hidden by default) -->
+                <div id="download-section" class="hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="font-medium text-gray-800 mb-4" data-i18n="download.title">Download Your Stitched Image</h3>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                            <div class="border border-gray-200 rounded-lg p-4 text-center">
+                                <h4 class="font-medium text-gray-800 mb-1" data-i18n="download.original">Original Size</h4>
+                                <p class="text-sm text-gray-500 mb-3" id="original-size">1920 × 1080</p>
+                                <a href="#" id="download-original" class="inline-flex items-center text-primary hover:text-primary/80 text-sm transition-colors">
+                                    <i class="fa fa-download mr-1"></i> <span data-i18n="download.download">Download</span>
+                                </a>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-4 text-center">
+                                <h4 class="font-medium text-gray-800 mb-1" data-i18n="download.hd">HD (1920px)</h4>
+                                <p class="text-sm text-gray-500 mb-3">1920 × auto</p>
+                                <a href="#" id="download-hd" class="inline-flex items-center text-primary hover:text-primary/80 text-sm transition-colors">
+                                    <i class="fa fa-download mr-1"></i> <span data-i18n="download.download">Download</span>
+                                </a>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-4 text-center">
+                                <h4 class="font-medium text-gray-800 mb-1" data-i18n="download.web">Web (1280px)</h4>
+                                <p class="text-sm text-gray-500 mb-3">1280 × auto</p>
+                                <a href="#" id="download-web" class="inline-flex items-center text-primary hover:text-primary/80 text-sm transition-colors">
+                                    <i class="fa fa-download mr-1"></i> <span data-i18n="download.download">Download</span>
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-3 justify-center">
+                            <button type="button" id="new-project-btn" class="inline-flex items-center px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:border-primary hover:text-primary transition-all btn-hover">
+                                <i class="fa fa-plus mr-2"></i> <span data-i18n="download.new_project">New Project</span>
+                            </button>
+                            <button type="button" id="share-btn" class="inline-flex items-center px-5 py-2.5 bg-neutral rounded-lg text-gray-700 hover:bg-gray-200 transition-all btn-hover">
+                                <i class="fa fa-share-alt mr-2"></i> <span data-i18n="download.share">Share Image</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Use process area -->
+        <section id="how-it-works" class="max-w-4xl mx-auto mb-16">
+            <div class="text-center mb-12">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4" data-i18n="how.title">How It Works</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto" data-i18n="how.description">
+                    Combine your images in just a few simple steps. No technical skills required.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center card-hover bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl mx-auto mb-4">
+                        <i class="fa fa-upload"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2" data-i18n="how.step1">1. Upload Images</h3>
+                    <p class="text-gray-600 text-sm" data-i18n="how.step1_desc">
+                        Select the images you want to combine or drag and drop them into the upload area.
+                    </p>
+                </div>
+                
+                <div class="text-center card-hover bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl mx-auto mb-4">
+                        <i class="fa fa-sliders"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2" data-i18n="how.step2">2. Customize Settings</h3>
+                    <p class="text-gray-600 text-sm" data-i18n="how.step2_desc">
+                        Choose stitching direction, output format, quality, and other preferences.
+                    </p>
+                </div>
+                
+                <div class="text-center card-hover bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl mx-auto mb-4">
+                        <i class="fa fa-download"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2" data-i18n="how.step3">3. Process & Download</h3>
+                    <p class="text-gray-600 text-sm" data-i18n="how.step3_desc">
+                        Process your images and download the stitched result in your preferred format.
+                    </p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Functional characteristic area -->
+        <section id="features" class="max-w-4xl mx-auto mb-16">
+            <div class="text-center mb-12">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4" data-i18n="features.title">Powerful Features</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto" data-i18n="features.description">
+                    Everything you need to combine images quickly and easily.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="flex items-start space-x-4 bg-white p-5 rounded-xl shadow-sm border border-gray-200 card-hover">
+                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
+                        <i class="fa fa-arrows-v"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2" data-i18n="features.feature1">Vertical & Horizontal Stitching</h3>
+                        <p class="text-gray-600 text-sm" data-i18n="features.feature1_desc">
+                            Combine images in both vertical and horizontal directions to create long screenshots or collages.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-4 bg-white p-5 rounded-xl shadow-sm border border-gray-200 card-hover">
+                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
+                        <i class="fa fa-file-image-o"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2" data-i18n="features.feature2">Multiple Format Support</h3>
+                        <p class="text-gray-600 text-sm" data-i18n="features.feature2_desc">
+                            Export your stitched images in JPEG, PNG, or WEBP format depending on your needs.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-4 bg-white p-5 rounded-xl shadow-sm border border-gray-200 card-hover">
+                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
+                        <i class="fa fa-sliders"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2" data-i18n="features.feature3">Quality Control</h3>
+                        <p class="text-gray-600 text-sm" data-i18n="features.feature3_desc">
+                            Adjust image quality to balance between file size and visual quality for optimal results.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-4 bg-white p-5 rounded-xl shadow-sm border border-gray-200 card-hover">
+                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
+                        <i class="fa fa-lock"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2" data-i18n="features.feature4">Private & Secure</h3>
+                        <p class="text-gray-600 text-sm" data-i18n="features.feature4_desc">
+                            All processing happens locally on your device. No images are uploaded to our servers.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-4 bg-white p-5 rounded-xl shadow-sm border border-gray-200 card-hover">
+                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
+                        <i class="fa fa-mobile"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2" data-i18n="features.feature5">Responsive Design</h3>
+                        <p class="text-gray-600 text-sm" data-i18n="features.feature5_desc">
+                            Works perfectly on desktops, tablets, and mobile devices. Stitch images anywhere, anytime.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-4 bg-white p-5 rounded-xl shadow-sm border border-gray-200 card-hover">
+                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
+                        <i class="fa fa-tint"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2" data-i18n="features.feature6">Custom Backgrounds</h3>
+                        <p class="text-gray-600 text-sm" data-i18n="features.feature6_desc">
+                            Add margins between images with custom background colors, including transparent for PNGs.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- FAQ section -->
+        <section id="faq" class="max-w-3xl mx-auto mb-16">
+            <div class="text-center mb-12">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4" data-i18n="faq.title">Frequently Asked Questions</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto" data-i18n="faq.description">
+                    Find answers to common questions about our image stitching tool.
+                </p>
+            </div>
+            
+            <div class="space-y-4" id="faq-container">
+                <!-- FAQ 1 -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <button class="faq-question w-full flex justify-between items-center p-5 text-left font-medium">
+                        <span data-i18n="faq.q1">Are my images uploaded to your servers?</span>
+                        <i class="fa fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                    </button>
+                    <div class="faq-answer px-5 pb-5 hidden">
+                        <p class="text-gray-600 text-sm" data-i18n="faq.a1">
+                            No, all image processing happens locally on your device. Your images are never uploaded to our servers, ensuring complete privacy and security.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- FAQ 2 -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <button class="faq-question w-full flex justify-between items-center p-5 text-left font-medium">
+                        <span data-i18n="faq.q2">What image formats are supported?</span>
+                        <i class="fa fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                    </button>
+                    <div class="faq-answer px-5 pb-5 hidden">
+                        <p class="text-gray-600 text-sm" data-i18n="faq.a2">
+                            Our tool supports all major image formats including JPEG, PNG, WEBP, GIF (still frames), and BMP. You can export your stitched images as JPEG, PNG, or WEBP.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- FAQ 3 -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <button class="faq-question w-full flex justify-between items-center p-5 text-left font-medium">
+                        <span data-i18n="faq.q3">Is there a limit to the number of images I can combine?</span>
+                        <i class="fa fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                    </button>
+                    <div class="faq-answer px-5 pb-5 hidden">
+                        <p class="text-gray-600 text-sm" data-i18n="faq.a3">
+                            For optimal performance, we recommend combining up to 20 images at a time. Combining more images may slow down processing depending on your device specifications.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- FAQ 4 -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <button class="faq-question w-full flex justify-between items-center p-5 text-left font-medium">
+                        <span data-i18n="faq.q4">Will the quality of my images be reduced?</span>
+                        <i class="fa fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                    </button>
+                    <div class="faq-answer px-5 pb-5 hidden">
+                        <p class="text-gray-600 text-sm" data-i18n="faq.a4">
+                            You have full control over the output quality. For JPEG and WEBP formats, you can adjust the compression level. PNG format preserves full quality with no compression loss.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- FAQ 5 -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <button class="faq-question w-full flex justify-between items-center p-5 text-left font-medium">
+                        <span data-i18n="faq.q5">Does this tool work on mobile devices?</span>
+                        <i class="fa fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                    </button>
+                    <div class="faq-answer px-5 pb-5 hidden">
+                        <p class="text-gray-600 text-sm" data-i18n="faq.a5">
+                            Yes, ImageStitch is fully responsive and works on all modern mobile devices. You can upload images from your camera roll and create stitched images on the go.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Call of Action Area -->
+        <section class="max-w-4xl mx-auto bg-gradient-to-r from-primary to-blue-700 rounded-2xl shadow-lg overflow-hidden">
+            <div class="p-8 md:p-12 text-white text-center">
+                <h2 class="text-2xl md:text-3xl font-bold mb-4" data-i18n="cta.title">Start Stitching Images Today</h2>
+                <p class="text-blue-100 mb-8 max-w-2xl mx-auto" data-i18n="cta.description">
+                    Combine your images quickly and securely. No account required, completely free to use.
+                </p>
+                <a href="#stitcher" class="inline-block bg-white text-primary hover:bg-gray-100 font-medium px-8 py-3 rounded-lg shadow btn-hover">
+                    <i class="fa fa-magic mr-2"></i> <span data-i18n="cta.start">Start Stitching Now</span>
+                </a>
+            </div>
+        </section>
+    </main>
+    <!-- footer -->
+    <footer class="bg-gray-50 border-t border-gray-200 py-8 mt-16">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
+                            <i class="fa fa-picture-o"></i>
+                        </div>
+                        <span class="text-lg font-semibold text-gray-800">ImageStitch</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4" data-i18n="footer.desc">
+                        Free online tool to combine images vertically or horizontally. Your images stay private on your device.
+                    </p>
+                    <div class="flex space-x-4">
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-800 mb-4 uppercase tracking-wider" data-i18n="footer.product">Product</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#features" class="text-sm text-gray-600 hover:text-primary transition-colors" data-i18n="footer.features">Features</a></li>
+                        <li><a href="#how-it-works" class="text-sm text-gray-600 hover:text-primary transition-colors" data-i18n="footer.how">How It Works</a></li>
+                        <li><a href="#faq" class="text-sm text-gray-600 hover:text-primary transition-colors" data-i18n="footer.faq">FAQ</a></li>
+                    </ul>
+                </div>
+                <div>
+    <h3 class="text-sm font-semibold text-gray-800 mb-4 uppercase tracking-wider" data-i18n="footer.legal">Legal</h3>
+    <ul class="space-y-2">
+        <!-- Privacy Policy Link -->
+        <li>
+            <a href="javascript:;" class="text-sm text-gray-600 hover:text-primary transition-colors cursor-pointer" 
+               data-i18n="footer.privacy" onclick="openModal('privacyModal')">
+                Privacy Policy
+            </a>
+        </li>
+        <!-- Service Terms Link -->
+        <li>
+            <a href="javascript:;" class="text-sm text-gray-600 hover:text-primary transition-colors cursor-pointer" 
+               data-i18n="footer.terms" onclick="openModal('termsModal')">
+                Terms of Service
+            </a>
+        </li>
+        <!-- Cookie Policy Link -->
+        <li>
+            <a href="javascript:;" class="text-sm text-gray-600 hover:text-primary transition-colors cursor-pointer" 
+               data-i18n="footer.cookies" onclick="openModal('cookiesModal')">
+                Cookie Policy
+            </a>
+        </li>
+    </ul>
+</div>
+
+<!-- Privacy Policy Pop up -->
+<div id="privacyModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[80vh] overflow-y-auto p-6 md:p-8">
+        <div class="flex justify-between items-start mb-6">
+            <h2 class="text-xl font-bold text-gray-800" data-i18n="modal.privacyTitle">Privacy Policy</h2>
+            <button onclick="closeModal('privacyModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="text-gray-700 space-y-4 text-sm md:text-base">
+            <p>Effective Date: November 6, 2025</p>
+            
+            <p>At Image Stitch, we are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website or services.</p>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">1. Information We Collect</h3>
+            <p>We may collect personal information that you voluntarily provide to us, including but not limited to:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>Contact information (name, email address, phone number)</li>
+                <li>Account credentials (username, password)</li>
+                <li>Demographic information (age, gender, location)</li>
+                <li>Information about your use of our services (browsing history, usage patterns)</li>
+            </ul>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">2. How We Use Your Information</h3>
+            <p>We use the collected information for the following purposes:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>To provide and maintain our services</li>
+                <li>To personalize your experience on our website</li>
+                <li>To communicate with you about our services, promotions, and updates</li>
+                <li>To improve our website and services based on your feedback</li>
+                <li>To prevent fraud and ensure the security of our platform</li>
+            </ul>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">3. Information Disclosure</h3>
+            <p>We will not disclose your personal information to third parties without your consent, except in the following circumstances:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>To comply with legal obligations or respond to lawful requests</li>
+                <li>To protect the rights, property, or safety of Image Stitch, our users, or others</li>
+                <li>To trusted third-party service providers who assist us in operating our website or providing services</li>
+            </ul>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">4. Data Security</h3>
+            <p>We implement appropriate technical and organizational measures to protect your personal information from unauthorized access, disclosure, alteration, or destruction. However, no method of transmission over the internet or electronic storage is 100% secure, and we cannot guarantee absolute security.</p>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">5. Your Rights</h3>
+            <p>You have the right to access, correct, or delete your personal information at any time. You may also have the right to object to or restrict certain processing of your information.</p>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">6. Changes to This Privacy Policy</h3>
+            <p>We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page. Your continued use of our services after any changes indicates your acceptance of the updated policy.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Service terms pop-up window -->
+<div id="termsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[80vh] overflow-y-auto p-6 md:p-8">
+        <div class="flex justify-between items-start mb-6">
+            <h2 class="text-xl font-bold text-gray-800" data-i18n="modal.termsTitle">Terms of Service</h2>
+            <button onclick="closeModal('termsModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="text-gray-700 space-y-4 text-sm md:text-base">
+            <p>Effective Date: November 6, 2025</p>
+            
+            <p>These Terms of Service ("Terms") govern your use of Image Stitch's website and services (collectively, the "Services"). By accessing or using the Services, you agree to be bound by these Terms. If you do not agree to these Terms, please do not use the Services.</p>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">1. Eligibility</h3>
+            <p>You must be at least 13 years of age to use the Services. By using the Services, you represent and warrant that you are at least 13 years old and have the legal capacity to enter into these Terms.</p>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">2. Account Registration</h3>
+            <p>To access certain features of the Services, you may need to create an account. You agree to provide accurate, current, and complete information during the registration process and to update such information as needed. You are responsible for maintaining the confidentiality of your account credentials and for all activities conducted through your account.</p>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">3. Use of Services</h3>
+            <p>You agree to use the Services only for lawful purposes and in compliance with these Terms and all applicable laws and regulations. You shall not:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>Use the Services in a way that violates any applicable law or regulation</li>
+                <li>Infringe upon the intellectual property rights of Image Stitch or third parties</li>
+                <li>Transmit any harmful, offensive, or inappropriate content</li>
+                <li>Attempt to gain unauthorized access to the Services or other users' accounts</li>
+                <li>Interfere with or disrupt the operation of the Services</li>
+            </ul>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">4. Intellectual Property</h3>
+            <p>All content and materials available on the Services, including but not limited to text, graphics, logos, images, and software, are the property of Image Stitch or its licensors and are protected by intellectual property laws. You may not reproduce, distribute, modify, or use any such content without prior written permission from Image Stitch.</p>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">5. Termination</h3>
+            <p>We may terminate or suspend your access to the Services at any time, with or without cause, and without prior notice. Upon termination, your right to use the Services will immediately cease. You may also terminate these Terms by discontinuing use of the Services.</p>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">6. Disclaimer of Warranties</h3>
+            <p>The Services are provided "as is" and "as available" without any warranties of any kind, either express or implied. Image Stitch disclaims all warranties, including but not limited to implied warranties of merchantability, fitness for a particular purpose, and non-infringement.</p>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">7. Limitation of Liability</h3>
+            <p>In no event shall Image Stitch be liable for any indirect, incidental, special, consequential, or punitive damages arising out of or in connection with your use of the Services. Our total liability to you for any claims arising from these Terms shall not exceed the amount you paid to us for the Services, if any.</p>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">8. Governing Law</h3>
+            <p>These Terms shall be governed by and construed in accordance with the laws of ImageStitch, without regard to its conflict of law principles.</p>
+            
+        </div>
+    </div>
+</div>
+
+<!-- Cookie Policy Pop up -->
+<div id="cookiesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[80vh] overflow-y-auto p-6 md:p-8">
+        <div class="flex justify-between items-start mb-6">
+            <h2 class="text-xl font-bold text-gray-800" data-i18n="modal.cookiesTitle">Cookie Policy</h2>
+            <button onclick="closeModal('cookiesModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="text-gray-700 space-y-4 text-sm md:text-base">
+            <p>Effective Date: November 6, 2025</p>
+            
+            <p>This Cookie Policy explains how Image Stitch ("we," "us," or "our") uses cookies and similar tracking technologies on our website. By using our website, you consent to the use of cookies as described in this policy.</p>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">1. What Are Cookies?</h3>
+            <p>Cookies are small text files that are placed on your device (computer, smartphone, or tablet) when you visit a website. They are widely used to make websites work more efficiently and to provide information to the website owners.</p>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">2. Types of Cookies We Use</h3>
+            <p>We use the following types of cookies on our website:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li><strong>Necessary Cookies:</strong> These cookies are essential for the operation of our website. They enable you to navigate the website and use its features. Without these cookies, the website may not function properly.</li>
+                <li><strong>Performance Cookies:</strong> These cookies collect information about how you use our website, such as which pages you visit most often and if you encounter any errors. This information helps us improve the performance of our website.</li>
+                <li><strong>Functional Cookies:</strong> These cookies allow our website to remember choices you make (such as your username, language, or region) and provide enhanced, personalized features.</li>
+                <li><strong>Marketing Cookies:</strong> These cookies are used to deliver advertisements that are relevant to you and your interests. They may also be used to limit the number of times you see an advertisement and to measure the effectiveness of advertising campaigns.</li>
+            </ul>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">3. How to Manage Cookies</h3>
+            <p>You can control and manage cookies through your browser settings. Most browsers allow you to block or delete cookies. However, please note that disabling certain cookies may affect the functionality of our website and your ability to use all its features.</p>
+            <p>To manage your cookie preferences, follow the instructions provided by your browser:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>Google Chrome: Settings > Privacy and security > Cookies and other site data</li>
+                <li>Mozilla Firefox: Settings > Privacy & Security > Cookies and Site Data</li>
+                <li>Apple Safari: Preferences > Privacy > Cookies and website data</li>
+                <li>Microsoft Edge: Settings > Privacy, search, and services > Cookies and site permissions</li>
+            </ul>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">4. Third-Party Cookies</h3>
+            <p>We may allow third-party service providers (such as analytics providers and advertising networks) to place cookies on our website. These third parties have their own cookie policies, and we are not responsible for their practices. We encourage you to review the cookie policies of these third parties.</p>
+            
+            <h3 class="font-semibold text-gray-800 mt-4">5. Changes to This Cookie Policy</h3>
+            <p>We may update this Cookie Policy from time to time. We will notify you of any changes by posting the new Cookie Policy on this page. Your continued use of our website after any changes indicates your acceptance of the updated policy.</p>
+            
+        </div>
+    </div>
+</div>
+
+<!-- Pop up control script -->
+<script>
+// Open the pop-up
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('hidden');
+        // Prohibit background scrolling
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+// Close pop-up
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('hidden');
+        // Restore background scrolling
+        document.body.style.overflow = '';
+    }
+}
+
+// Click on the mask layer to close the pop-up window
+document.querySelectorAll('[id$="Modal"]').forEach(modal => {
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    });
+});
+
+// Keyboard ESC closes pop-up window
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('[id$="Modal"]').forEach(modal => {
+            modal.classList.add('hidden');
+        });
+        document.body.style.overflow = '';
+    }
+});
+</script>
+
+<!-- Necessary style supplements if there are no global styles in the project -->
+<style>
+/* Ensure scrolling when pop-up content overflows */
+.max-h-\[80vh\] {
+    max-height: 80vh;
+}
+.overflow-y-auto {
+    overflow-y: auto;
+}
+/* Smooth transition effect */
+.transition-colors {
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+/* Responsive adjustment */
+@media (max-width: 768px) {
+    .max-w-3xl {
+        max-width: 90vw;
+    }
+    .p-6 {
+        padding: 1.5rem;
+    }
+}
+</style>
+
+                
+            </div>
+            
+            <div class="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-sm text-gray-500 mb-4 md:mb-0" data-i18n="footer.copyright">
+                    © 2025 ImageStitch. All rights reserved.
+                </p>
+                <p class="text-sm text-gray-500" data-i18n="footer.disclaimer">
+                    This tool is for personal use only. Please respect copyright laws.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Notification component -->
+    <div id="notification" class="fixed bottom-6 right-6 bg-gray-900 text-white p-4 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3 z-50 max-w-xs">
+        <i id="notification-icon" class="fa fa-check-circle text-secondary text-xl"></i>
+        <p id="notification-message" class="text-sm">Operation completed successfully!</p>
+        <button id="close-notification" class="text-gray-400 hover:text-white ml-auto">
+            <i class="fa fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Core Function Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM element reference
+            const dropArea = document.getElementById('drop-area');
+            const imageUpload = document.getElementById('image-upload');
+            const imagesList = document.getElementById('images-list');
+            const imageItemsContainer = document.getElementById('image-items-container');
+            const processBtn = document.getElementById('process-btn');
+            const stitchForm = document.getElementById('stitch-form');
+            const directionOptions = document.querySelectorAll('input[name="direction"]');
+            const qualitySlider = document.getElementById('image-quality');
+            const qualityValue = document.getElementById('quality-value');
+            const marginSlider = document.getElementById('image-margin');
+            const marginValue = document.getElementById('margin-value');
+            const bgColorInput = document.getElementById('bg-color');
+            const presetColors = document.getElementById('preset-colors');
+            const previewContainer = document.getElementById('preview-container');
+            const initialPreview = document.getElementById('initial-preview');
+            const loadingPreview = document.getElementById('loading-preview');
+            const resultPreview = document.getElementById('result-preview');
+            const previewCanvas = document.getElementById('preview-canvas');
+            const previewDimensions = document.getElementById('preview-dimensions');
+            const clearPreview = document.getElementById('clear-preview');
+            const downloadSection = document.getElementById('download-section');
+            const downloadOriginal = document.getElementById('download-original');
+            const downloadHd = document.getElementById('download-hd');
+            const downloadWeb = document.getElementById('download-web');
+            const originalSize = document.getElementById('original-size');
+            const newProjectBtn = document.getElementById('new-project-btn');
+            const shareBtn = document.getElementById('share-btn');
+            const progressFill = document.getElementById('progress-fill');
+            const notification = document.getElementById('notification');
+            const notificationMessage = document.getElementById('notification-message');
+            const notificationIcon = document.getElementById('notification-icon');
+            const closeNotification = document.getElementById('close-notification');
+            const faqQuestions = document.querySelectorAll('.faq-question');
+            const languageBtn = document.getElementById('language-btn');
+            const languageDropdown = document.getElementById('language-dropdown');
+            const languageOptions = document.querySelectorAll('.language-option');
+            const currentLang = document.getElementById('current-lang');
+            
+            // global variable
+            let uploadedImages = [];
+            let canvasContext = previewCanvas.getContext('2d');
+            let stitchedImageData = null;
+            let currentLanguage = 'en';
+            
+            // Initialize direction selection style
+            function updateDirectionLabels() {
+                directionOptions.forEach(option => {
+                    const label = option.nextElementSibling;
+                    if (option.checked) {
+                        label.classList.add('border-primary', 'bg-primary/5');
+                        label.classList.remove('border-gray-300');
+                    } else {
+                        label.classList.remove('border-primary', 'bg-primary/5');
+                        label.classList.add('border-gray-300');
+                    }
+                });
+            }
+            
+            // Update quality value display
+            qualitySlider.addEventListener('input', function() {
+                const value = parseFloat(this.value);
+                let qualityText = '';
+                
+                if (value >= 0.9) qualityText = 'Best (0.9+)';
+                else if (value >= 0.7) qualityText = 'Very High (0.7-0.89)';
+                else if (value >= 0.5) qualityText = 'High (0.5-0.69)';
+                else if (value >= 0.3) qualityText = 'Medium (0.3-0.49)';
+                else qualityText = 'Low (0.1-0.29)';
+                
+                qualityValue.textContent = qualityText;
+            });
+            
+            // Update spacing value display
+            marginSlider.addEventListener('input', function() {
+                marginValue.textContent = `${this.value}px`;
+                updateDirectionLabels(); // Re render direction labels to apply spacing changes
+            });
+            
+            // Background color preset change
+            presetColors.addEventListener('change', function() {
+                bgColorInput.value = this.value;
+            });
+            
+            // Background color input change
+            bgColorInput.addEventListener('input', function() {
+                let presetFound = false;
+                for (let i = 0; i < presetColors.options.length; i++) {
+                    if (presetColors.options[i].value === this.value) {
+                        presetColors.selectedIndex = i;
+                        presetFound = true;
+                        break;
+                    }
+                }
+                
+                if (!presetFound) {
+                    if (!presetColors.querySelector('option[value="custom"]')) {
+                        const customOption = document.createElement('option');
+                        customOption.value = 'custom';
+                        customOption.textContent = 'Custom';
+                        presetColors.appendChild(customOption);
+                    }
+                    presetColors.value = 'custom';
+                }
+            });
+            
+            // Process image upload
+            function handleImageUpload(files) {
+                if (files.length === 0) return;
+                
+                // Limit up to 20 images
+                const imagesToProcess = Array.from(files).slice(0, 20);
+                
+                imagesToProcess.forEach(file => {
+                    if (!file.type.startsWith('image/')) {
+                        showNotification('Invalid file type. Please select images only.', 'error');
+                        return;
+                    }
+                    
+                    // Check for duplicate images
+                    const isDuplicate = uploadedImages.some(img => img.name === file.name && img.size === file.size);
+                    if (isDuplicate) return;
+                    
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        const img = new Image();
+                        img.onload = function() {
+                            // Add to the uploaded image array
+                            uploadedImages.push({
+                                name: file.name,
+                                size: file.size,
+                                type: file.type,
+                                src: e.target.result,
+                                width: img.width,
+                                height: img.height
+                            });
+                            
+                            // Update UI
+                            updateImagesList();
+                            
+                            // Enable the processing button after uploading at least one image
+                            if (uploadedImages.length > 0) {
+                                processBtn.disabled = false;
+                            }
+                        };
+                        img.src = e.target.result;
+                    };
+                    
+                    reader.readAsDataURL(file);
+                });
+            }
+            
+            // Update Image List UI
+            function updateImagesList() {
+                imagesList.classList.remove('hidden');
+                imageItemsContainer.innerHTML = '';
+                
+                uploadedImages.forEach((image, index) => {
+                    const imageItem = document.createElement('div');
+                    imageItem.className = 'flex items-center justify-between p-2 border border-gray-200 rounded-lg image-item bg-white';
+                    imageItem.innerHTML = `
+                        <div class="flex items-center space-x-2">
+                            <div class="w-10 h-10 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                                <img src="${image.src}" alt="${image.name}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-medium text-gray-800 truncate">${image.name}</p>
+                                <p class="text-xs text-gray-500">${image.width}×${image.height} • ${formatFileSize(image.size)}</p>
+                            </div>
+                        </div>
+                        <button type="button" class="remove-image p-1.5 text-gray-400 hover:text-red-500 transition-colors opacity-0 visibility-hidden" data-index="${index}">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    `;
+                    imageItemsContainer.appendChild(imageItem);
+                });
+                
+                // Add and delete event listeners
+                document.querySelectorAll('.remove-image').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        uploadedImages.splice(index, 1);
+                        updateImagesList();
+                        
+                        // If there are no more pictures, disable the processing button
+                        if (uploadedImages.length === 0) {
+                            processBtn.disabled = true;
+                        }
+                    });
+                });
+            }
+            
+            // Format file size
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+                return (bytes / 1048576).toFixed(1) + ' MB';
+            }
+            
+            // Format file size
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropArea.classList.add('border-primary', 'bg-primary/5');
+            }
+            
+            function unhighlight() {
+                dropArea.classList.remove('border-primary', 'bg-primary/5');
+            }
+            
+            dropArea.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleImageUpload(files);
+            }
+            
+            // Click to upload
+            dropArea.addEventListener('click', function() {
+                imageUpload.click();
+            });
+            
+            imageUpload.addEventListener('change', function() {
+                handleImageUpload(this.files);
+            });
+            
+            // Direction selection change
+            directionOptions.forEach(option => {
+                option.addEventListener('change', updateDirectionLabels);
+            });
+            
+            // Form submission processing images
+            stitchForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                stitchImages();
+            });
+            
+            // Splicing Image Function
+            function stitchImages() {
+                if (uploadedImages.length === 0) {
+                    showNotification('Please upload at least one image first.', 'error');
+                    return;
+                }
+                
+                // Display loading status
+                initialPreview.classList.add('hidden');
+                resultPreview.classList.add('hidden');
+                loadingPreview.classList.remove('hidden');
+                downloadSection.classList.add('hidden');
+                progressFill.style.width = '0%';
+                
+                // Get form values
+                const direction = document.querySelector('input[name="direction"]:checked').value;
+                const format = document.getElementById('output-format').value;
+                const quality = parseFloat(document.getElementById('image-quality').value);
+                const margin = parseInt(document.getElementById('image-margin').value);
+                const bgColor = document.getElementById('bg-color').value;
+                
+                // Calculate canvas size
+                let canvasWidth = 0;
+                let canvasHeight = 0;
+                const imageInfos = [];
+                
+                // First pass: Calculate dimensions and load all images
+                let loadedImages = 0;
+                
+                uploadedImages.forEach((imageData, index) => {
+                    const img = new Image();
+                    img.onload = function() {
+                        imageInfos.push({
+                            image: img,
+                            width: img.width,
+                            height: img.height
+                        });
+                        
+                        // Update progress
+                        loadedImages++;
+                        const progress = (loadedImages / uploadedImages.length) * 100;
+                        progressFill.style.width = `${progress}%`;
+                        
+                        // After loading all the images, calculate the size and draw them
+                        if (loadedImages === uploadedImages.length) {
+                            // Calculate canvas size based on orientation
+                            if (direction === 'vertical') {
+                                // Vertical direction: The width is taken as the maximum image width, and the height is accumulated + spacing
+                                let maxWidth = 0;
+                                let totalHeight = 0;
+                                
+                                imageInfos.forEach(info => {
+                                    if (info.width > maxWidth) {
+                                        maxWidth = info.width;
+                                    }
+                                    totalHeight += info.height + margin;
+                                });
+                                
+                                // Subtract the last spacing
+                                totalHeight = Math.max(0, totalHeight - margin);
+                                
+                                canvasWidth = maxWidth + (margin * 2);
+                                canvasHeight = totalHeight + (margin * 2);
+                            } else {
+                                // Horizontal direction: take the maximum image height as the height, and add up the width + spacing
+                                let totalWidth = 0;
+                                let maxHeight = 0;
+                                
+                                imageInfos.forEach(info => {
+                                    totalWidth += info.width + margin;
+                                    if (info.height > maxHeight) {
+                                        maxHeight = info.height;
+                                    }
+                                });
+                                
+                                // Subtract the last spacing
+                                totalWidth = Math.max(0, totalWidth - margin);
+                                
+                                canvasWidth = totalWidth + (margin * 2);
+                                canvasHeight = maxHeight + (margin * 2);
+                            }
+                            
+                            // Set canvas size
+                            previewCanvas.width = canvasWidth;
+                            previewCanvas.height = canvasHeight;
+                            
+                            // Draw Background
+                            canvasContext.fillStyle = bgColor;
+                            canvasContext.fillRect(0, 0, canvasWidth, canvasHeight);
+                            
+                            // draw a picture
+                            let currentX = margin;
+                            let currentY = margin;
+                            
+                            imageInfos.forEach(info => {
+                                if (direction === 'vertical') {
+                                    // Vertical direction: centered alignment
+                                    const x = margin + (canvasWidth - 2 * margin - info.width) / 2;
+                                    canvasContext.drawImage(info.image, x, currentY, info.width, info.height);
+                                    currentY += info.height + margin;
+                                } else {
+                                    // Horizontal direction: centered alignment
+                                    const y = margin + (canvasHeight - 2 * margin - info.height) / 2;
+                                    canvasContext.drawImage(info.image, currentX, y, info.width, info.height);
+                                    currentX += info.width + margin;
+                                }
+                            });
+                            
+                            // Save image data
+                            stitchedImageData = {
+                                width: canvasWidth,
+                                height: canvasHeight,
+                                format: format,
+                                quality: quality
+                            };
+                            
+                            // Update preview information
+                            previewDimensions.textContent = `${canvasWidth} × ${canvasHeight}`;
+                            originalSize.textContent = `${canvasWidth} × ${canvasHeight}`;
+                            
+                            // Update download link
+                            updateDownloadLinks();
+                            
+                            // display results
+                            setTimeout(() => {
+                                loadingPreview.classList.add('hidden');
+                                resultPreview.classList.remove('hidden');
+                                downloadSection.classList.remove('hidden');
+                                previewDimensions.classList.remove('hidden');
+                                clearPreview.classList.remove('hidden');
+                                progressFill.style.width = '100%';
+                                
+                                showNotification('Images stitched successfully!', 'success');
+                            }, 500);
+                        }
+                    };
+                    img.src = imageData.src;
+                });
+            }
+            
+            // Update download link
+            function updateDownloadLinks() {
+                if (!stitchedImageData) return;
+                
+                // Original size download
+                downloadOriginal.onclick = function(e) {
+                    e.preventDefault();
+                    downloadStitchedImage(
+                        stitchedImageData.width, 
+                        stitchedImageData.height, 
+                        `stitched-image-${stitchedImageData.width}x${stitchedImageData.height}.${getExtensionFromFormat(stitchedImageData.format)}`
+                    );
+                };
+                
+                // HDSize Download (1920px width)
+                downloadHd.onclick = function(e) {
+                    e.preventDefault();
+                    const targetWidth = 1920;
+                    const targetHeight = Math.round((targetWidth / stitchedImageData.width) * stitchedImageData.height);
+                    downloadStitchedImage(
+                        targetWidth, 
+                        targetHeight, 
+                        `stitched-image-hd-1920x${targetHeight}.${getExtensionFromFormat(stitchedImageData.format)}`
+                    );
+                };
+                
+                // WebSize Download (1280px width)
+                downloadWeb.onclick = function(e) {
+                    e.preventDefault();
+                    const targetWidth = 1280;
+                    const targetHeight = Math.round((targetWidth / stitchedImageData.width) * stitchedImageData.height);
+                    downloadStitchedImage(
+                        targetWidth, 
+                        targetHeight, 
+                        `stitched-image-web-1280x${targetHeight}.${getExtensionFromFormat(stitchedImageData.format)}`
+                    );
+                };
+            }
+            
+            // Retrieve file extension from format
+            function getExtensionFromFormat(format) {
+                switch(format) {
+                    case 'image/jpeg': return 'jpg';
+                    case 'image/png': return 'png';
+                    case 'image/webp': return 'webp';
+                    default: return 'jpg';
+                }
+            }
+            
+            // Download the spliced image
+            function downloadStitchedImage(targetWidth, targetHeight, filename) {
+                if (!stitchedImageData) return;
+                
+                // Create a temporary canvas for scaling
+                const tempCanvas = document.createElement('canvas');
+                const tempContext = tempCanvas.getContext('2d');
+                
+                // Set temporary canvas size
+                tempCanvas.width = targetWidth;
+                tempCanvas.height = targetHeight;
+                
+                // Draw a scaled image
+                tempContext.drawImage(previewCanvas, 0, 0, targetWidth, targetHeight);
+                
+                // Create download link
+                const link = document.createElement('a');
+                
+                // Download properties according to format settings
+                if (stitchedImageData.format === 'image/jpeg') {
+                    link.href = tempCanvas.toDataURL('image/jpeg', stitchedImageData.quality);
+                } else if (stitchedImageData.format === 'image/webp') {
+                    link.href = tempCanvas.toDataURL('image/webp', stitchedImageData.quality);
+                } else {
+                    link.href = tempCanvas.toDataURL('image/png');
+                }
+                
+                link.download = filename;
+                link.click();
+                
+                showNotification(`Image downloaded as ${filename}`, 'success');
+            }
+            
+            // clear preview
+            clearPreview.addEventListener('click', function() {
+                resultPreview.classList.add('hidden');
+                downloadSection.classList.add('hidden');
+                previewDimensions.classList.add('hidden');
+                clearPreview.classList.add('hidden');
+                initialPreview.classList.remove('hidden');
+                stitchedImageData = null;
+            });
+            
+            // New Project Button
+            newProjectBtn.addEventListener('click', function() {
+                // Reset form and status
+                uploadedImages = [];
+                updateImagesList();
+                processBtn.disabled = true;
+                stitchForm.reset();
+                updateDirectionLabels();
+                qualityValue.textContent = 'High (0.8)';
+                marginValue.textContent = '0px';
+                bgColorInput.value = '#ffffff';
+                presetColors.value = '#ffffff';
+                
+                // Reset Preview
+                resultPreview.classList.add('hidden');
+                downloadSection.classList.add('hidden');
+                previewDimensions.classList.add('hidden');
+                clearPreview.classList.add('hidden');
+                initialPreview.classList.remove('hidden');
+                stitchedImageData = null;
+                
+                showNotification('Ready for new project', 'info');
+                
+                // Scroll to the upload area
+                dropArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+            
+            // Share button
+            shareBtn.addEventListener('click', function() {
+                if (!stitchedImageData) {
+                    showNotification('No stitched image to share', 'error');
+                    return;
+                }
+                
+                // Check if the browser supports sharing API
+                if (navigator.share) {
+                    // Create a temporary image URL for sharing
+                    previewCanvas.toBlob(blob => {
+                        const file = new File([blob], `stitched-image.${getExtensionFromFormat(stitchedImageData.format)}`, {
+                            type: stitchedImageData.format
+                        });
+                        
+                        const filesArray = [file];
+                        
+                        // Share data
+                        const shareData = {
+                            title: 'Stitched Image from ImageStitch',
+                            text: 'Check out my stitched image created with ImageStitch!',
+                            files: filesArray
+                        };
+                        
+                        navigator.share(shareData)
+                            .then(() => showNotification('Image shared successfully', 'success'))
+                            .catch(error => showNotification('Sharing failed: ' + error.message, 'error'));
+                    }, stitchedImageData.format, stitchedImageData.quality);
+                } else {
+                    // Downgrade processing: Copy link
+                    navigator.clipboard.writeText(window.location.href)
+                        .then(() => {
+                            showNotification('Link copied to clipboard. Share it manually.', 'info');
+                        })
+                        .catch(error => {
+                            showNotification('Failed to copy link: ' + error.message, 'error');
+                        });
+                }
+            });
+            
+            // FAQ Folding function
+            faqQuestions.forEach(question => {
+                question.addEventListener('click', function() {
+                    const answer = this.nextElementSibling;
+                    const icon = this.querySelector('i');
+                    
+                    // Switch answer display/hide
+                    answer.classList.toggle('hidden');
+                    
+                    // Rotate icon
+                    if (answer.classList.contains('hidden')) {
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                });
+            });
+            
+            // language selector
+            languageBtn.addEventListener('click', function() {
+                languageDropdown.classList.toggle('hidden');
+            });
+            
+            // Click on the external to close the language dropdown menu
+            document.addEventListener('click', function(e) {
+                if (!languageBtn.contains(e.target) && !languageDropdown.contains(e.target)) {
+                    languageDropdown.classList.add('hidden');
+                }
+            });
+            
+            // Language switch
+            languageOptions.forEach(option => {
+                option.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const lang = this.getAttribute('data-lang');
+                    currentLanguage = lang;
+                    currentLang.textContent = this.textContent;
+                    languageDropdown.classList.add('hidden');
+                    updateLanguage(lang);
+                });
+            });
+            
+            // Notification function
+            function showNotification(message, type = 'success') {
+                notificationMessage.textContent = message;
+                
+                // Set icon type
+                if (type === 'success') {
+                    notificationIcon.className = 'fa fa-check-circle text-secondary text-xl';
+                } else if (type === 'error') {
+                    notificationIcon.className = 'fa fa-exclamation-circle text-red-500 text-xl';
+                } else if (type === 'info') {
+                    notificationIcon.className = 'fa fa-info-circle text-primary text-xl';
+                }
+                
+                // Show notification
+                notification.classList.remove('translate-y-20', 'opacity-0');
+                notification.classList.add('translate-y-0', 'opacity-100');
+                
+                // Auto Close
+                setTimeout(() => {
+                    hideNotification();
+                }, 3000);
+            }
+            
+            function hideNotification() {
+                notification.classList.remove('translate-y-0', 'opacity-100');
+                notification.classList.add('translate-y-20', 'opacity-0');
+            }
+            
+            // Turn off notifications
+            closeNotification.addEventListener('click', hideNotification);
+            
+            // initialization
+            updateDirectionLabels();
+        });
+    </script>
+</body>
+</html>
