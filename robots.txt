@@ -1,0 +1,77 @@
+# robots.txt for https://imagestitchtools.pages.dev/
+# Created: 2024-11-07
+
+User-agent: *
+Disallow: /
+
+# Allow crawling of main page and all in-page anchors (SPA structure)
+Allow: /$
+Allow: /#stitcher$
+Allow: /#how-it-works$
+Allow: /#features$
+Allow: /#faq$
+Allow: /#privacy-policy$
+Allow: /#terms-of-service$
+Allow: /#cookie-policy$
+
+# Block static resources to focus crawling on core content
+Disallow: /*.css$
+Disallow: /*.js$
+Disallow: /*.svg$
+Disallow: /*.png$
+Disallow: /*.jpg$
+Disallow: /*.jpeg$
+Disallow: /*.webp$
+
+# Sitemap location for search engine indexing
+Sitemap: https://imagestitchtools.pages.dev/sitemap.xml
+
+# Polite crawl delay to avoid server load
+Crawl-delay: 10
+
+# Specific directives for major search engines
+User-agent: Googlebot
+Allow: /$
+Allow: /#*$
+Crawl-delay: 5
+
+User-agent: Bingbot
+Allow: /$
+Allow: /#*$
+Crawl-delay: 5
+
+User-agent: YandexBot
+Allow: /$
+Allow: /#*$
+Crawl-delay: 10
+
+User-agent: DuckDuckGoBot
+Allow: /$
+Allow: /#*$
+Crawl-delay: 8
+
+# Block scrapers and suspicious bots while allowing legitimate crawlers
+User-agent: *bot*
+Disallow: /
+Allow: /$
+Allow: /#*$
+
+User-agent: *crawler*
+Disallow: /
+Allow: /$
+Allow: /#*$
+
+User-agent: *spider*
+Disallow: /
+Allow: /$
+Allow: /#*$
+
+# Block AI scrapers and data harvesters
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: BardBot
+Disallow: /
